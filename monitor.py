@@ -1,6 +1,6 @@
 """
 Monitor do concurso TJPR (FGV) - versão 2.
-
+ 
 Detecta qualquer movimentação na seção "Arquivos do concurso":
   - item novo (com ou sem link, inclusive com link igual a um item antigo);
   - item alterado ou removido;
@@ -16,16 +16,16 @@ import sys
 import time
 import uuid
 from pathlib import Path
-
+ 
 import requests
 from bs4 import BeautifulSoup, NavigableString
-
+ 
 URL = "https://conhecimento.fgv.br/concursos/tjpr25"
 ARQUIVO_ESTADO = Path("estado.json")
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "").strip()
 MODO_TESTE = os.environ.get("TESTE", "false").lower() == "true"
 QTD_PDFS_VERIFICADOS = 15  # quantos PDFs mais recentes checar por substituição
-
+ 
 DATA_RE = re.compile(r"^\d{2}/\d{2}/\d{4}$")
 DATA_INICIO_RE = re.compile(r"^(\d{2}/\d{2}/\d{4})\s+(.+)$")
 HEADERS = {
@@ -36,16 +36,16 @@ HEADERS = {
     "Cache-Control": "no-cache, no-store, max-age=0",
     "Pragma": "no-cache",
 }
-
-
+ 
+ 
 def limpar(t: str) -> str:
     return " ".join(t.split())
-
-
+ 
+ 
 def notificar(titulo: str, mensagem: str, link: str = URL) -> None:
     if not NTFY_TOPIC:
-        print(f"[sem NTFY_TOPIC] {titulo}: {mensagem}")
-        return
+        print("ERRO: o segredo NTFY_TOPIC está vazio ou não foi encontrado.")
+        sys.exit(1)  # falha visível (X vermelho) em vez de silêncio
     r = requests.post(
         "https://ntfy.sh",
         json={
@@ -60,8 +60,8 @@ def notificar(titulo: str, mensagem: str, link: str = URL) -> None:
     )
     r.raise_for_status()
     print(f"Notificação enviada: {titulo} | {mensagem[:80]}")
-
-
+ 
+ 
 def baixar_pagina() -> str:
     # Duas tentativas, cada uma com parâmetro aleatório para furar o cache
     ultimo_erro = None
@@ -77,12 +77,12 @@ def baixar_pagina() -> str:
             ultimo_erro = e
             time.sleep(10)
     raise RuntimeError(f"Não foi possível baixar a página: {ultimo_erro}")
-
-
+ 
+ 
 def analisar(html: str) -> dict:
     """Divide a seção em blocos, cada um iniciado por uma data."""
     soup = BeautifulSoup(html, "html.parser")
-
+ 
     inicio = next(
         (h for h in soup.find_all(["h1", "h2", "h3", "h4"])
          if "arquivos do concurso" in h.get_text(" ", strip=True).lower()),
@@ -90,7 +90,7 @@ def analisar(html: str) -> dict:
     )
     if inicio is None:
         raise RuntimeError("Seção 'Arquivos do concurso' não encontrada.")
-
+ 
     # Cabeçalho = status + título + texto introdutório (do <h1> até a seção de arquivos)
     cabecalho = []
     h1 = soup.find("h1")
@@ -105,7 +105,7 @@ def analisar(html: str) -> dict:
                 txt = limpar(str(el))
                 if txt:
                     cabecalho.append(txt)
-
+ 
     blocos, atual = [], None
     for el in inicio.next_elements:
         nome = getattr(el, "name", None)
@@ -131,10 +131,10 @@ def analisar(html: str) -> dict:
                 atual["textos"].append(txt)
         elif nome == "a" and el.get("href") and atual is not None:
             atual["links"].append(requests.compat.urljoin(URL, el["href"]))
-
+ 
     if not blocos:
         raise RuntimeError("Nenhum item encontrado na seção.")
-
+ 
     itens = []
     for b in blocos:
         texto = " | ".join(b["textos"]) or "(item sem texto)"
@@ -142,10 +142,10 @@ def analisar(html: str) -> dict:
             json.dumps([b["data"], texto, b["links"]], ensure_ascii=False).encode()
         ).hexdigest()
         itens.append({"data": b["data"], "texto": texto, "links": b["links"], "chave": chave})
-
+ 
     return {"cabecalho": " ".join(cabecalho), "itens": itens}
-
-
+ 
+ 
 def assinaturas_pdfs(itens: list[dict]) -> dict:
     """ETag/Last-Modified/tamanho dos PDFs mais recentes, para detectar substituição."""
     pdfs = []
@@ -164,20 +164,20 @@ def assinaturas_pdfs(itens: list[dict]) -> dict:
         except Exception:
             pass
     return assin
-
-
+ 
+ 
 def mais_recente(itens: list[dict]) -> dict:
     def k(i):
         d = i["data"]
         return d[6:] + d[3:5] + d[:2] if DATA_RE.match(d) else "0"
     return max(itens, key=k)
-
-
+ 
+ 
 def main() -> None:
     if MODO_TESTE:
         notificar("Teste do monitor TJPR", "Se você ouviu o som, está tudo funcionando.")
         return
-
+ 
     try:
         pagina = analisar(baixar_pagina())
     except Exception as e:
@@ -190,7 +190,7 @@ def main() -> None:
             notificar("Monitor TJPR com problema",
                       f"Não consigo ler a página há cerca de 1 hora. Último erro: {e}")
         return
-
+ 
     pdfs = assinaturas_pdfs(pagina["itens"])
     novo_estado = {
         "cabecalho": pagina["cabecalho"],
@@ -198,7 +198,7 @@ def main() -> None:
         "pdfs": pdfs,
         "falhas_seguidas": 0,
     }
-
+ 
     if not ARQUIVO_ESTADO.exists() or "itens" not in json.loads(ARQUIVO_ESTADO.read_text("utf-8")):
         ARQUIVO_ESTADO.write_text(json.dumps(novo_estado, ensure_ascii=False, indent=1), "utf-8")
         mr = mais_recente(pagina["itens"])
@@ -206,16 +206,16 @@ def main() -> None:
                   f'{len(pagina["itens"])} itens registrados. Mais recente: '
                   f'{mr["data"]} - {mr["texto"]}')
         return
-
+ 
     antigo = json.loads(ARQUIVO_ESTADO.read_text("utf-8"))
     avisos = []
-
+ 
     for it in pagina["itens"]:
         if it["chave"] not in antigo["itens"]:
             avisos.append(("Nova movimentação no concurso TJPR",
                            f'{it["data"]} - {it["texto"]}',
                            it["links"][0] if it["links"] else URL))
-
+ 
     removidos = set(antigo["itens"]) - set(novo_estado["itens"])
     if removidos and len(removidos) <= 5:
         for k in removidos:
@@ -223,17 +223,17 @@ def main() -> None:
     elif removidos:
         avisos.append(("Concurso TJPR: página reorganizada",
                        f"{len(removidos)} itens mudaram. Confira o site.", URL))
-
+ 
     for link, assin in pdfs.items():
         anterior = antigo.get("pdfs", {}).get(link)
         if anterior and assin and anterior != assin:
             avisos.append(("Arquivo substituído no concurso TJPR",
                            f"O documento foi atualizado no mesmo endereço: {link}", link))
-
+ 
     if antigo.get("cabecalho") and antigo["cabecalho"] != pagina["cabecalho"]:
         avisos.append(("Cabeçalho do concurso TJPR mudou",
                        pagina["cabecalho"][:300], URL))
-
+ 
     for titulo, msg, link in avisos[:8]:
         notificar(titulo, msg, link)
     if len(avisos) > 8:
@@ -241,9 +241,10 @@ def main() -> None:
     if not avisos:
         mr = mais_recente(pagina["itens"])
         print(f'Nenhuma novidade. Mais recente: {mr["data"]} - {mr["texto"][:80]}')
-
+ 
     ARQUIVO_ESTADO.write_text(json.dumps(novo_estado, ensure_ascii=False, indent=1), "utf-8")
-
-
+ 
+ 
 if __name__ == "__main__":
     main()
+ 
