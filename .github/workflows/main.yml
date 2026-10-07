@@ -1,0 +1,46 @@
+# Salve este arquivo no repositório com o nome:  .github/workflows/monitor.yml
+name: Monitor TJPR
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # a cada 10 minutos (o GitHub pode atrasar alguns minutos)
+  workflow_dispatch:
+    inputs:
+      teste:
+        description: "Enviar apenas uma notificação de teste?"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency: monitor-tjpr
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependências
+        run: pip install requests beautifulsoup4
+
+      - name: Verificar site da FGV
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TESTE: ${{ inputs.teste || 'false' }}
+        run: python monitor.py
+
+      - name: Salvar estado
+        run: |
+          git config user.name "monitor-bot"
+          git config user.email "monitor-bot@users.noreply.github.com"
+          if [ -f estado.json ]; then
+            git add estado.json
+            git diff --cached --quiet || (git commit -m "Atualiza estado" && git push)
+          fi
