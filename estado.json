@@ -1,6 +1,7 @@
 {
  "cabecalho": "Em Andamento Concurso Público para o Tribunal de Justiça do Estado do Paraná Informações sobre o concurso público para o Tribunal de Justiça do Estado do Paraná podem ser obtidas pelo telefone 0800 2834628 e pelo e-mail concursotjpr25@fgv.br a partir de 24/11/2025. O concurso oferece vagas para o cargo de Juiz Substituto do Tribunal de Justiça do Estado do Paraná, conforme disposto no Edital. Página de Acompanhamento Emissão de Certificado: Solicite aqui seu Certificado de Aprovação da FGV para concursos e provas realizadas.",
  "itens": {
+  "62484ab8c50e83e7c92b1aed4c5578861659e6303b69a0b91149a52992c157d6": "16/10/2026 - Edital Nº 051/2025",
   "92c065b6227573a136b29fcdeb974786ab0ee1d2f16a192c402a952b4c05f1f2": "07/10/2026 - Edital Nº 050/2025 – Resultado provisório do procedimento de heteroidentificação",
   "2bd3c4afde26ab331b0e743f3e43161773678e0b7d638a2f6d72804dc291ce42": "02/10/2026 - Edital nº 049/2025 – Resultado definitivo das provas escritas práticas de sentença e convocação para a Terceira Etapa (candidato sub judice)",
   "518e98d361400aaef773af3b9d7c4916f45b9672d262df857eaff39918b51888": "25/09/2026 - Edital nº 048/2025 – Resultado definitivo das provas escritas práticas de sentença e convocação para a Terceira Etapa (candidato sub judice)",
@@ -104,6 +105,7 @@
   "5673892f14e1bc30413702e49e886632b2984c26df6d7bd128722049343234ec": "24/11/2025 - Edital (retificado em 12/12/2025)"
  },
  "pdfs": {
+  "https://conhecimento.fgv.br/sites/default/files/concursos/sei_13641428_edital_14397-1.pdf": "|Fri, 16 Oct 2026 19:14:36 GMT|146467",
   "https://conhecimento.fgv.br/sites/default/files/concursos/sei_13601667_edital_14268.pdf": "|Tue, 06 Oct 2026 20:53:58 GMT|74739",
   "https://conhecimento.fgv.br/sites/default/files/concursos/sei_13589079_edital_14218.pdf": "|Fri, 02 Oct 2026 20:12:06 GMT|86814",
   "https://conhecimento.fgv.br/sites/default/files/concursos/edital-no-048-2025.pdf": "|Fri, 25 Sep 2026 19:35:25 GMT|97897",
@@ -117,8 +119,7 @@
   "https://conhecimento.fgv.br/sites/default/files/concursos/sei_13397399_edital_13550-2-2.pdf": "|Fri, 14 Aug 2026 21:15:14 GMT|45200",
   "https://conhecimento.fgv.br/sites/default/files/concursos/sei_13392186_edital_13527-1.pdf": "|Fri, 14 Aug 2026 16:51:20 GMT|48839",
   "https://conhecimento.fgv.br/sites/default/files/concursos/sei_13378509_edital_13481-2.pdf": "|Wed, 12 Aug 2026 12:55:00 GMT|44817",
-  "https://conhecimento.fgv.br/sites/default/files/concursos/sei_13339701_edital_13327-1.pdf": "|Mon, 03 Aug 2026 18:10:19 GMT|68826",
-  "https://conhecimento.fgv.br/sites/default/files/concursos/sei_13305110_edital_13186-2.pdf": "|Fri, 24 Jul 2026 19:45:10 GMT|44054"
+  "https://conhecimento.fgv.br/sites/default/files/concursos/sei_13339701_edital_13327-1.pdf": "|Mon, 03 Aug 2026 18:10:19 GMT|68826"
  },
  "falhas_seguidas": 0
 }
